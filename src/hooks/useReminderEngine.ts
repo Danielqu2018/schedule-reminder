@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 import { Schedule } from '../types/database';
 import { useNotifications } from './useNotifications';
 import { isWithinInterval, addMinutes, parse, format, differenceInDays, parseISO, isValid } from 'date-fns';
+import { checkTableExists } from '../utils/databaseCheck';
 
 const REMINDER_CACHE_KEY = 'projectflow_reminded_ids';
 
@@ -55,15 +56,28 @@ export function useReminderEngine(userId: string | undefined) {
     if (!userId) return;
 
     try {
+      // 先检查表是否存在
+      const tableCheck = await checkTableExists('schedules');
+      if (!tableCheck.exists) {
+        // 表不存在，静默跳过（避免频繁报错）
+        return;
+      }
+
       const todayStr = format(new Date(), 'yyyy-MM-dd');
       const { data: schedules, error } = await supabase
         .from('schedules')
         .select('*')
         .eq('user_id', userId)
-        .eq('date', todayStr)
+        .or(`start_date.eq.${todayStr},end_date.eq.${todayStr},and(start_date.lte.${todayStr},end_date.gte.${todayStr})`)
         .not('status', 'in', '("completed","cancelled")');
 
-      if (error) throw error;
+      if (error) {
+        // 如果是表不存在的错误，静默跳过
+        if (error.code === 'PGRST205' || error.message?.includes('schema cache')) {
+          return;
+        }
+        throw error;
+      }
       if (!schedules) return;
 
       const now = new Date();
@@ -73,19 +87,36 @@ export function useReminderEngine(userId: string | undefined) {
         const cacheId = `schedule-${schedule.id}`;
         if (remindedIds.current.has(cacheId)) return;
 
-        const scheduleTime = parseScheduleTime(schedule.time, now);
-        if (!isValid(scheduleTime)) return;
+        // 检查是否在日期范围内
+        const startDate = schedule.start_date ? new Date(schedule.start_date) : null;
+        const endDate = schedule.end_date ? new Date(schedule.end_date) : null;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-        if (isWithinInterval(scheduleTime, { start: now, end: nextInterval })) {
+        // 如果今天在日期范围内，或者今天就是开始/结束日期，则提醒
+        const shouldRemind = 
+          (startDate && startDate.getTime() === today.getTime()) ||
+          (endDate && endDate.getTime() === today.getTime()) ||
+          (startDate && endDate && startDate <= today && today <= endDate);
+
+        if (shouldRemind) {
+          const dateInfo = schedule.end_date && schedule.end_date !== schedule.start_date
+            ? `${schedule.start_date} - ${schedule.end_date}`
+            : schedule.start_date || schedule.date || '今天';
+          
           showNotification(`🔔 日程提醒: ${schedule.title}`, {
-            body: `时间: ${schedule.time}${schedule.description ? `\n描述: ${schedule.description}` : ''}`,
+            body: `日期: ${dateInfo}${schedule.description ? `\n描述: ${schedule.description}` : ''}`,
             tag: cacheId,
           });
           saveRemindedIds(cacheId);
         }
       });
     } catch (error) {
-      console.error('Check upcoming schedules failed:', error);
+      // 如果是表不存在的错误，静默跳过（避免频繁报错）
+      const errorMessage = error instanceof Error ? error.message : '';
+      if (!errorMessage.includes('schema cache') && !errorMessage.includes('PGRST205')) {
+        console.error('Check upcoming schedules failed:', error);
+      }
     }
   }, [userId, showNotification, saveRemindedIds]);
 
@@ -98,13 +129,25 @@ export function useReminderEngine(userId: string | undefined) {
     lastStagnantCheck.current = now;
 
     try {
+      // 先检查表是否存在
+      const tableCheck = await checkTableExists('schedules');
+      if (!tableCheck.exists) {
+        return;
+      }
+
       const { data: schedules, error } = await supabase
         .from('schedules')
         .select('*')
         .eq('user_id', userId)
         .not('status', 'in', '("completed","cancelled")');
 
-      if (error) throw error;
+      if (error) {
+        // 如果是表不存在的错误，静默跳过
+        if (error.code === 'PGRST205' || error.message?.includes('schema cache')) {
+          return;
+        }
+        throw error;
+      }
       if (!schedules) return;
 
       const stagnantTasks: Schedule[] = [];
@@ -128,7 +171,11 @@ export function useReminderEngine(userId: string | undefined) {
         });
       }
     } catch (error) {
-      console.error('Check stagnant tasks failed:', error);
+      // 如果是表不存在的错误，静默跳过
+      const errorMessage = error instanceof Error ? error.message : '';
+      if (!errorMessage.includes('schema cache') && !errorMessage.includes('PGRST205')) {
+        console.error('Check stagnant tasks failed:', error);
+      }
     }
   }, [userId, showNotification]);
 

@@ -3,12 +3,14 @@
 }
 
 .team-header-premium {
-  background: white;
+  background: var(--card-bg);
   padding: 2.5rem;
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-lg);
   margin-bottom: 2rem;
   border: 1px solid var(--card-border);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .back-link {
@@ -60,12 +62,12 @@
 .tab-btn-premium {
   padding: 0.75rem 2rem;
   border: 1px solid var(--card-border);
-  background: white;
+  background: transparent;
   border-radius: 99px;
   font-weight: 600;
   color: var(--text-muted);
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
 }
 
 .tab-btn-premium.active {
@@ -138,9 +140,9 @@
   text-transform: uppercase;
 }
 
-.role-owner { background: #fef3c7; color: #92400e; }
-.role-admin { background: #dbeafe; color: #1e40af; }
-.role-member { background: #f1f5f9; color: #475569; }
+.role-owner { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.2); }
+.role-admin { background: rgba(59, 130, 246, 0.15); color: var(--primary); border: 1px solid rgba(59, 130, 246, 0.2); }
+.role-member { background: rgba(163, 163, 163, 0.15); color: var(--text-muted); border: 1px solid rgba(163, 163, 163, 0.2); }
 
 .member-joined {
   margin-top: 1rem;
@@ -232,14 +234,16 @@
   align-items: center;
   gap: 1rem;
   padding: 1rem;
-  background: #f8fafc;
+  background: rgba(17, 17, 17, 0.3);
+  border: 1px solid var(--card-border);
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .selector-item:hover {
-  background: #f1f5f9;
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .selector-info {

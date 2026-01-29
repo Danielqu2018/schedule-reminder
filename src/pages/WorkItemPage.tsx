@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { WorkItem, Task, TaskComment } from '../types/database';
+import { WorkItem, Task, TaskComment, TaskEvent } from '../types/database';
 import './WorkItemPage.css';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { format, addHours, differenceInHours, parseISO } from 'date-fns';
+import { useToast } from '../hooks/useToast';
+import EventRecordModal from '../components/EventRecord/EventRecordModal';
+import EventList from '../components/EventRecord/EventList';
 
 interface TeamMember {
   id: string;
@@ -38,6 +41,9 @@ export default function WorkItemPage() {
 
   const [timeInputMode, setTimeInputMode] = useState<'duration' | 'endTime'>('duration');
   const [commentContent, setCommentContent] = useState('');
+  const [showEventModal, setShowEventModal] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<TaskEvent | undefined>();
+  const [eventsKey, setEventsKey] = useState(0); // 用于强制刷新事件列表
 
   useEffect(() => {
     if (taskId) {
@@ -387,7 +393,7 @@ export default function WorkItemPage() {
                               <div style={{ marginBottom: '4px' }}>⏱️ 预计耗时: {item.duration_hours}h {item.planned_end_time && `(至 ${new Date(item.planned_end_time).toLocaleTimeString()})`}</div>
                             )}
                             {item.objectives && (
-                              <div style={{ marginTop: '5px', background: '#f9fafb', padding: '6px', borderRadius: '4px' }}>
+                              <div style={{ marginTop: '5px', background: 'rgba(17, 17, 17, 0.3)', padding: '6px', borderRadius: '4px' }}>
                                 <strong>目标:</strong> {item.objectives}
                               </div>
                             )}
@@ -400,8 +406,8 @@ export default function WorkItemPage() {
                             disabled={item.status === 'completed'}
                             className="btn-update-progress"
                             style={{ 
-                              background: item.status === 'completed' ? '#f3f4f6' : 'var(--primary-glow)', 
-                              color: item.status === 'completed' ? '#9ca3af' : 'var(--primary)', 
+                              background: item.status === 'completed' ? 'rgba(163, 163, 163, 0.15)' : 'var(--primary-glow)', 
+                              color: item.status === 'completed' ? 'var(--text-muted)' : 'var(--primary)', 
                               border: 'none', 
                               padding: '6px 16px', 
                               borderRadius: '8px', 
@@ -443,7 +449,7 @@ export default function WorkItemPage() {
               <select 
                 value={formData.execution_order} 
                 onChange={(e) => setFormData({...formData, execution_order: e.target.value as 'parallel' | 'sequential'})}
-                style={{ width: '100%', padding: '10px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '0.9rem', backgroundColor: 'white' }}
+                style={{ width: '100%', padding: '10px', border: '1px solid var(--card-border)', borderRadius: '6px', fontSize: '0.9rem', backgroundColor: 'rgba(17, 17, 17, 0.6)', color: 'var(--text-dark)' }}
               >
                 <option value="parallel">并行 (所有子项可同时进行)</option>
                 <option value="sequential">顺序 (需按序号依次完成)</option>
@@ -454,7 +460,7 @@ export default function WorkItemPage() {
               <select 
                 value={formData.assignee_id} 
                 onChange={(e) => setFormData({...formData, assignee_id: e.target.value})}
-                style={{ width: '100%', padding: '10px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '0.9rem', backgroundColor: 'white' }}
+                style={{ width: '100%', padding: '10px', border: '1px solid var(--card-border)', borderRadius: '6px', fontSize: '0.9rem', backgroundColor: 'rgba(17, 17, 17, 0.6)', color: 'var(--text-dark)' }}
               >
                 <option value="">选择负责人</option>
                 {teamMembers.map(m => (
@@ -469,7 +475,7 @@ export default function WorkItemPage() {
                 type="datetime-local" 
                 value={formData.planned_start_time} 
                 onChange={(e) => setFormData({...formData, planned_start_time: e.target.value})}
-                style={{ width: '100%', padding: '10px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '0.9rem' }}
+                style={{ width: '100%', padding: '10px', border: '1px solid var(--card-border)', borderRadius: '6px', fontSize: '0.9rem', backgroundColor: 'rgba(17, 17, 17, 0.6)', color: 'var(--text-dark)' }}
               />
             </div>
 
@@ -477,14 +483,14 @@ export default function WorkItemPage() {
               <button 
                 type="button"
                 onClick={() => setTimeInputMode('duration')}
-                style={{ flex: 1, padding: '6px', fontSize: '0.8rem', borderRadius: '4px', border: '1px solid #4f46e5', background: timeInputMode === 'duration' ? '#4f46e5' : 'white', color: timeInputMode === 'duration' ? 'white' : '#4f46e5', cursor: 'pointer' }}
+                style={{ flex: 1, padding: '6px', fontSize: '0.8rem', borderRadius: '4px', border: '1px solid var(--primary)', background: timeInputMode === 'duration' ? 'var(--primary)' : 'transparent', color: timeInputMode === 'duration' ? 'white' : 'var(--primary)', cursor: 'pointer' }}
               >
                 预计时长
               </button>
               <button 
                 type="button"
                 onClick={() => setTimeInputMode('endTime')}
-                style={{ flex: 1, padding: '6px', fontSize: '0.8rem', borderRadius: '4px', border: '1px solid #4f46e5', background: timeInputMode === 'endTime' ? '#4f46e5' : 'white', color: timeInputMode === 'endTime' ? 'white' : '#4f46e5', cursor: 'pointer' }}
+                style={{ flex: 1, padding: '6px', fontSize: '0.8rem', borderRadius: '4px', border: '1px solid var(--primary)', background: timeInputMode === 'endTime' ? 'var(--primary)' : 'transparent', color: timeInputMode === 'endTime' ? 'white' : 'var(--primary)', cursor: 'pointer' }}
               >
                 完成时间
               </button>
@@ -602,6 +608,23 @@ export default function WorkItemPage() {
           )}
         </div>
       </div>
+
+      {taskId && (
+        <EventRecordModal
+          taskId={parseInt(taskId)}
+          workItemId={undefined}
+          isOpen={showEventModal}
+          onClose={() => {
+            setShowEventModal(false);
+            setEditingEvent(undefined);
+          }}
+          onSuccess={() => {
+            setEventsKey(prev => prev + 1);
+          }}
+          event={editingEvent}
+        />
+      )}
+
       <ToastContainer />
     </div>
   );

@@ -16,6 +16,7 @@ import InviteAcceptPage from './pages/InviteAcceptPage';
 // 布局组件
 import Layout from './components/Layout/Layout';
 import { useReminderEngine } from './hooks/useReminderEngine';
+import DatabaseStatus from './components/DatabaseStatus/DatabaseStatus';
 
 // Error Boundary 组件
 interface ErrorBoundaryState {
@@ -155,6 +156,7 @@ function App() {
 
   return (
     <ErrorBoundary>
+      {user && <DatabaseStatus />}
       <Routes>
         <Route 
           path="/login" 

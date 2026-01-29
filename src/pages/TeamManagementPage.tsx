@@ -228,7 +228,7 @@ export default function TeamManagementPage() {
       // 发送邀请邮件
       try {
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const { error: emailError } = await fetch(`${supabaseUrl}/functions/v1/send-invitation-email`, {
+        const response = await fetch(`${supabaseUrl}/functions/v1/send-invitation-email`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -240,19 +240,36 @@ export default function TeamManagementPage() {
             inviteUrl: inviteUrl,
             inviterName: user.email || '团队成员',
           }),
-        }).then(res => res.json());
+        });
 
-        if (emailError) {
-          console.warn('邮件发送失败，但邀请已创建:', emailError);
-          // 即使邮件发送失败，也显示成功，因为邀请已创建
+        // 检查 HTTP 状态
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+          console.error('邮件发送失败:', errorData);
           showSuccess(`邀请已创建！邀请链接：${inviteUrl}`);
-        } else {
+          showError(`邮件发送失败：${errorData.error || '未知错误'}。请手动复制邀请链接发送。`);
+          return;
+        }
+
+        const result = await response.json();
+        
+        // 检查响应中的错误字段
+        if (result.error) {
+          console.warn('邮件发送失败，但邀请已创建:', result.error);
+          showSuccess(`邀请已创建！邀请链接：${inviteUrl}`);
+          showError(`邮件发送失败：${result.error}。请手动复制邀请链接发送。`);
+        } else if (result.success) {
           showSuccess('邀请邮件已发送！');
+        } else {
+          // 未知响应格式
+          console.warn('邮件发送响应格式未知:', result);
+          showSuccess(`邀请已创建！邀请链接：${inviteUrl}`);
         }
       } catch (emailErr) {
-        console.warn('邮件发送失败，但邀请已创建:', emailErr);
+        console.error('邮件发送请求失败:', emailErr);
         // 即使邮件发送失败，也显示成功，因为邀请已创建
         showSuccess(`邀请已创建！邀请链接：${inviteUrl}`);
+        showError('邮件发送请求失败。请手动复制邀请链接发送。');
       }
 
       setInviteEmail('');

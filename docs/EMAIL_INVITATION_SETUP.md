@@ -43,26 +43,30 @@ Supabase 默认提供简单的 SMTP 服务器，但有限制（仅限团队成�
 
 **方式二：配置自定义 SMTP（生产环境推荐）**
 
+详细的 SMTP 配置指南请参考：[SMTP 配置指南](./SMTP_SETUP.md)
+
+**快速配置步骤**：
 1. 登录 Supabase Dashboard
 2. 进入 **Authentication** > **SMTP**（路径：`https://supabase.com/dashboard/project/[your-project-ref]/auth/smtp`）
-3. 配置 SMTP 服务器：
-   - **Host**: 您的 SMTP 服务器地址（如：smtp.gmail.com）
-   - **Port**: SMTP 端口（通常为 587 或 465）
-   - **User**: SMTP 用户名
-   - **Password**: SMTP 密码
-   - **Sender email**: 发件人邮箱地址（如：noreply@yourdomain.com）
-   - **Sender name**: 发件人名称（如：ProjectFlow）
-
-   **常用 SMTP 配置示例**：
-   - **Gmail**: smtp.gmail.com:587（需要应用专用密码）
-   - **SendGrid**: smtp.sendgrid.net:587
-   - **Resend**: smtp.resend.com:587
-   - **Mailgun**: smtp.mailgun.org:587
-   - **AWS SES**: email-smtp.region.amazonaws.com:587
-
+3. 填写 SMTP 配置信息（Host、Port、User、Password、Sender email、Sender name）
 4. 点击 **Save** 保存配置
 
-**参考文档**：[Supabase Auth SMTP 配置指南](https://supabase.com/docs/guides/auth/auth-smtp)
+**常用 SMTP 服务商**：
+- Gmail（需要应用专用密码）
+- SendGrid
+- Resend
+- Mailgun
+- AWS SES
+- Postmark
+- Brevo
+- 腾讯企业邮箱
+- 阿里云企业邮箱
+
+**详细配置说明**：请查看 [SMTP 配置指南](./SMTP_SETUP.md) 获取各服务商的详细配置步骤和故障排除方法。
+
+**参考文档**：
+- [Supabase Auth SMTP 配置指南](https://supabase.com/docs/guides/auth/auth-smtp)
+- [项目 SMTP 配置指南](./SMTP_SETUP.md)
 
 #### 步骤 2：配置邮件模板（可选）
 
@@ -78,31 +82,54 @@ Supabase 默认提供简单的 SMTP 服务器，但有限制（仅限团队成�
 
 **参考文档**：[Supabase 邮件模板指南](https://supabase.com/docs/guides/auth/auth-email-templates)
 
-#### 步骤 3：部署 Edge Function
+#### 步骤 3：部署 Edge Function ⚠️ **重要：必须部署**
 
-1. 确保已安装 Supabase CLI：
+**⚠️ 如果 Edge Function 未部署，邮件发送功能将无法工作！**
+
+1. **安装 Supabase CLI**（如果未安装）：
    ```bash
    npm install -g supabase
    ```
 
-2. 登录 Supabase：
+2. **登录 Supabase**：
    ```bash
    supabase login
    ```
+   - 这会打开浏览器，完成登录
 
-3. 链接到您的项目：
+3. **获取项目引用 ID**：
+   - Supabase Dashboard > Project Settings > General
+   - 复制 **Reference ID**（格式：`abcdefghijklmnop`）
+
+4. **链接到您的项目**：
    ```bash
    supabase link --project-ref your-project-ref
    ```
+   - 将 `your-project-ref` 替换为您的 Reference ID
 
-4. 部署 Edge Function：
+5. **部署 Edge Function**：
    ```bash
    supabase functions deploy send-invitation-email
    ```
 
-5. 设置环境变量（Edge Function 会自动使用 Supabase 项目的配置）：
+6. **验证部署**：
+   ```bash
+   supabase functions list
+   ```
+   - 应该看到 `send-invitation-email` 函数
+
+7. **在 Dashboard 中验证**：
+   - Supabase Dashboard > Edge Functions
+   - 确认 `send-invitation-email` 函数存在且状态为 **Active**
+
+**环境变量**（Edge Function 会自动使用 Supabase 项目的配置）：
    - `SUPABASE_URL`: 自动从项目配置获取
    - `SUPABASE_SERVICE_ROLE_KEY`: 自动从项目配置获取
+
+**⚠️ 如果部署失败**：
+- 检查 Supabase CLI 版本：`supabase --version`
+- 确认已登录：`supabase projects list`
+- 查看详细错误信息
 
 #### 步骤 4：验证邮件发送
 

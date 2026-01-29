@@ -11,41 +11,42 @@
 
 .page-header h2 {
   font-size: 1.8rem;
-  font-weight: 800;
-  background: linear-gradient(135deg, var(--text-dark), var(--primary));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-weight: 700;
+  color: var(--text-dark);
+  letter-spacing: -0.02em;
 }
 
 .add-btn {
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  background: var(--primary);
   color: white;
   border: none;
   padding: 0.8rem 1.5rem;
   border-radius: var(--radius-md);
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 15px var(--primary-glow);
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
 }
 
 .add-btn:hover {
-  transform: translateY(-2px);
-  filter: brightness(1.1);
-  box-shadow: 0 8px 25px var(--primary-glow);
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 /* Form Styling */
 .schedule-form {
-  background: white;
+  background: var(--card-bg);
   padding: 2rem;
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-xl);
+  box-shadow: var(--shadow-lg);
   margin-bottom: 3rem;
   border: 1px solid var(--card-border);
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .form-row {
@@ -72,8 +73,19 @@
   padding: 0.8rem;
   border: 1px solid var(--card-border);
   border-radius: var(--radius-sm);
-  background-color: #f8fafc;
-  transition: all 0.2s;
+  background-color: rgba(17, 17, 17, 0.6);
+  color: var(--text-dark);
+  transition: all 0.2s ease;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: var(--text-muted);
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: var(--text-muted);
 }
 
 .form-group input:focus, 
@@ -81,8 +93,15 @@
 .form-group textarea:focus {
   outline: none;
   border-color: var(--primary);
-  background-color: white;
-  box-shadow: 0 0 0 4px var(--primary-glow);
+  background-color: rgba(17, 17, 17, 0.8);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.form-hint {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
 }
 
 .submit-btn {
@@ -108,21 +127,23 @@
 }
 
 .schedule-card {
-  background: white;
+  background: var(--card-bg);
   padding: 1.5rem;
   border-radius: var(--radius-lg);
   border: 1px solid var(--card-border);
   box-shadow: var(--shadow-sm);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .schedule-card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--shadow-xl);
-  border-color: var(--primary-light);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .schedule-header {
@@ -144,10 +165,26 @@
   font-weight: 600;
 }
 
-.status-pending { background: #fff7ed; color: #9a3412; }
-.status-in_progress { background: #eff6ff; color: #1e40af; }
-.status-completed { background: #f0fdf4; color: #166534; }
-.status-cancelled { background: #f1f5f9; color: #475569; }
+.status-pending { 
+  background: rgba(245, 158, 11, 0.15); 
+  color: var(--warning);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+.status-in_progress { 
+  background: rgba(59, 130, 246, 0.15); 
+  color: var(--primary);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+.status-completed { 
+  background: rgba(16, 185, 129, 0.15); 
+  color: var(--success);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+.status-cancelled { 
+  background: rgba(163, 163, 163, 0.15); 
+  color: var(--text-muted);
+  border: 1px solid rgba(163, 163, 163, 0.2);
+}
 
 .schedule-info {
   display: flex;
@@ -164,11 +201,12 @@
 }
 
 .description {
-  background: #f8fafc;
+  background: rgba(255, 255, 255, 0.05);
   padding: 0.75rem;
   border-radius: var(--radius-sm);
   font-size: 0.85rem;
-  color: var(--text-muted);
+  color: var(--text-main);
+  border-left: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 .schedule-footer {
@@ -178,14 +216,89 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.75rem;
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.progress-section {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: rgba(17, 17, 17, 0.3);
+  border-radius: var(--radius-sm);
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.progress-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.progress-percentage {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.progress-bar-container {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.progress-bar {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 3px;
+  transition: width 0.3s ease-out;
+}
+
+.progress-update-time {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+.btn-update-progress {
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--card-border);
+  font-size: 0.85rem;
+  background: transparent;
+  color: var(--text-main);
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-update-progress:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-dark);
+  border-color: var(--primary);
 }
 
 .status-select-premium {
   padding: 0.4rem 0.8rem;
   border-radius: var(--radius-sm);
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--card-border);
   font-size: 0.85rem;
-  background: white;
+  background: rgba(17, 17, 17, 0.6);
+  color: var(--text-dark);
   cursor: pointer;
 }
 
@@ -200,7 +313,7 @@
 }
 
 .btn-delete-icon:hover {
-  background: #fef2f2;
+  background: rgba(239, 68, 68, 0.15);
 }
 
 .empty-state {
